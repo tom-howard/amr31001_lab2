@@ -21,8 +21,7 @@ ament_python_install_package(${PROJECT_NAME}_modules)
 
 # Install Python executables
 install(PROGRAMS
-  scripts/basic_velocity_control.py
-  scripts/stop_me.py
+  scripts/ex2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

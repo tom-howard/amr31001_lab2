@@ -4,14 +4,18 @@
   <name>amr31001_lab2</name>
   <version>0.0.0</version>
   
-  <description>TODO: Package description</description>
+  <description>ROS 2 Package for AMR31001 Lab 2</description>
   
-  <maintainer email="your.name.1@sheffield.ac.uk">Name 1</maintainer>
-  <maintainer email="your.name.2@sheffield.ac.uk">Name 2</maintainer>
+  <maintainer email="name1@sheffield.ac.uk">Name 1</maintainer>
+  <maintainer email="name2@sheffield.ac.uk">Name 2</maintainer>
 
   <license>TODO: License declaration</license>
 
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <buildtool_depend>ament_cmake_python</buildtool_depend>
