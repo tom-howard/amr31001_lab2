@@ -18,7 +18,7 @@ class Square(Node):
         self.turn = False 
         
         self.create_timer(
-            timer_period_sec=0.1, # 10 Hz
+            timer_period_sec=0.05, 
             callback=self.move_square,
         )
 
