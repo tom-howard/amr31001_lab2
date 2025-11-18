@@ -22,6 +22,7 @@ ament_python_install_package(${PROJECT_NAME}_modules)
 # Install Python executables
 install(PROGRAMS
   scripts/ex2.py
+  scripts/ex2.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
