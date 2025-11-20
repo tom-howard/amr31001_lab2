@@ -5,11 +5,17 @@ from rclpy.node import Node
 from rclpy.signals import SignalHandlerOptions
 from ament_index_python.packages import get_package_share_directory
 from nav2_msgs.srv import SaveMap
+from pathlib import Path
 
 class MapSaver(Node):
 
     def __init__(self):
-        super().__init__("map_saver")
+        super().__init__("ex4_map_saver")
+
+        pkg_path = Path(get_package_share_directory('amr31001_lab2'))
+        map_path = pkg_path.joinpath('maps')
+        map_path.mkdir(exist_ok=True)
+        self.map_file = str(map_path.joinpath('my_map')).replace(str(Path.home()), '').lstrip('/')
 
         self.client = self.create_client(
             srv_type=SaveMap, 
@@ -29,8 +35,19 @@ class MapSaver(Node):
         )
 
     def save_map(self):
-        pkg_share = get_package_share_directory('amr31001_lab2')
-        # todo: get src dir of pkg and cal map service to save map
+        
+        self.get_logger().info(
+            f"Saving map to: ~/{self.map_file}"
+        )
+
+        request = SaveMap.Request()
+
+        request.map_topic = '/map'
+        request.map_url = self.map_file
+        request.image_format = 'pgm'
+        request.map_mode = 'trinary'
+        
+        self.client.call_async(request)
 
 def main(args=None):
     rclpy.init(
