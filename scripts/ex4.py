@@ -35,7 +35,6 @@ class MapSaver(Node):
         )
 
     def save_map(self):
-        
         self.get_logger().info(
             f"Saving map to: ~/{self.map_file}"
         )
@@ -48,6 +47,9 @@ class MapSaver(Node):
         request.map_mode = 'trinary'
         
         self.client.call_async(request)
+
+    def on_shutdown(self):
+        self.shutdown = True
 
 def main(args=None):
     rclpy.init(
