@@ -18,6 +18,11 @@ class WallFollower(Node):
             timer_period_sec=0.1, 
             callback=self.follow_wall,
         )
+    
+    def on_shutdown(self):
+        print("Stopping the robot...")
+        self.motion.stop()
+        self.shutdown = True
 
     def follow_wall(self):
         lin_vel = 0.1
