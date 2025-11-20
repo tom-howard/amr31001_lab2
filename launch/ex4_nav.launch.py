@@ -18,6 +18,10 @@
 # Adaptation Date: November 2025
 # Description: Customized launch configuration for AMR31001 Lab2 navigation exercise.
 
+# TODO: 
+# * Include SLAM with no Rviz
+# * Customise rviz nav config to turn off TF and Robot Description (or fix the assoicated errors)
+
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.actions import IncludeLaunchDescription
