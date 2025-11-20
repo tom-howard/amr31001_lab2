@@ -69,6 +69,19 @@ def generate_launch_description():
             default_value='false',
             description='Use simulation (Gazebo) clock if true'),
 
+        IncludeLaunchDescription( 
+            PythonLaunchDescriptionSource( 
+                PathJoinSubstitution([ 
+                    FindPackageShare("tuos_tb3_tools"), 
+                    "launch", 
+                    "slam.launch.py" 
+                ])
+            ),
+            launch_arguments={ 
+                'environment': 'real'
+            }.items()
+        ),
+        
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 PathJoinSubstitution([
