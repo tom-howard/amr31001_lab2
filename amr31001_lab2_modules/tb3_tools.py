@@ -135,10 +135,8 @@ class Lidar():
                          f"l3     {self.l2:<5.3f}                       {self.r2:>5.3f}   r3\n" \
                          f"{self.l3:<5.3f}                                   {self.r3:>5.3f}\n" \
                          f"{self.l4:<5.3f} <-- l4                     r4 --> {self.r4:>5.3f}"
-            self.node.get_logger().info(
-                    f"Lidar distances (m):\n"
-                    f"{lidar_segs}"
-                )
+            
+            return lidar_segs
                         
     def laserscan_cb(self, scan_data: LaserScan):
 

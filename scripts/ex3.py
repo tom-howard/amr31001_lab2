@@ -28,29 +28,31 @@ class WallFollower(Node):
         lin_vel = 0.1
 
         wall_slope = self.lidar.distance.l3 - self.lidar.distance.l4
-        self.lidar.distance.show()
+        
 
         if (self.lidar.distance.front < 0.3) or (self.lidar.distance.l1 < 0.4):
             lin_vel = 0.0
             ang_vel = -0.3
-            movement = "turning to avoid collision up ahead..."
+            action = "turning to avoid collision up ahead..."
         elif (self.lidar.distance.l3 > 0.6):
-            movement = "lost sight of the wall, turning left..."
+            action = "lost sight of the wall, turning left..."
             lin_vel = 0.0
             ang_vel = 0.3
         elif abs(wall_slope) < 0.001:
-            movement = "go straight"
+            action = "go straight"
             ang_vel = 0.0
         elif wall_slope < 0:
-            movement = "turn right"
+            action = "turn right"
             ang_vel = -0.2 if self.lidar.distance.l3 > 0.2 else -0.4
         else:
-            movement = "turn left"
+            action = "turn left"
             ang_vel = 0.2 if self.lidar.distance.l4 < 0.2 else 0.4
         
         self.get_logger().info("\n"
-            f"{wall_slope=:.3f}"
-            f"{movement=}\n"
+            f"{self.lidar.distance.show()}\n"
+            f"{wall_slope=:.3f}\n"
+            f"{action=}\n",
+            throttle_duration_sec=1.0
         )
 
         self.motion.move_at_velocity(linear=lin_vel, angular=ang_vel)
