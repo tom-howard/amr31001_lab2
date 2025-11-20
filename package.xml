@@ -9,7 +9,7 @@
   <maintainer email="name1@sheffield.ac.uk">Name 1</maintainer>
   <maintainer email="name2@sheffield.ac.uk">Name 2</maintainer>
 
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
