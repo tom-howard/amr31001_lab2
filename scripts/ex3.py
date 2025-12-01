@@ -25,28 +25,19 @@ class WallFollower(Node):
         self.shutdown = True
 
     def follow_wall(self):
-        lin_vel = 0.1
+        lin_vel = 0.0
 
         wall_slope = self.lidar.distance.l3 - self.lidar.distance.l4
-        
 
-        if (self.lidar.distance.front < 0.3) or (self.lidar.distance.l1 < 0.4):
-            lin_vel = 0.0
-            ang_vel = -0.3
-            action = "turning to avoid collision up ahead..."
-        elif (self.lidar.distance.l3 > 0.6):
-            action = "lost sight of the wall, turning left..."
-            lin_vel = 0.0
-            ang_vel = 0.3
-        elif abs(wall_slope) < 0.001:
+        if abs(wall_slope) < 0.001:
             action = "go straight"
             ang_vel = 0.0
         elif wall_slope < 0:
-            action = "turn right"
-            ang_vel = -0.2 if self.lidar.distance.l3 > 0.2 else -0.4
+            action = "turn left, or right??"
+            ang_vel = 0.0
         else:
-            action = "turn left"
-            ang_vel = 0.2 if self.lidar.distance.l4 < 0.2 else 0.4
+            action = "turn left, or right??"
+            ang_vel = 0.0
         
         self.get_logger().info("\n"
             f"{self.lidar.distance.show()}\n"
@@ -55,7 +46,9 @@ class WallFollower(Node):
             throttle_duration_sec=1.0
         )
 
-        self.motion.move_at_velocity(linear=lin_vel, angular=ang_vel)
+        self.motion.move_at_velocity(
+            linear=lin_vel, angular=ang_vel
+        )
 
 def main(args=None):
     rclpy.init(
