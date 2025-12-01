@@ -35,7 +35,8 @@ class Square(Node):
 
     def move_square(self):
         if self.turn:
-            # turn by 90 degrees...
+            # Turning State
+            
             # keep track of how much yaw has been accrued during the current turn
             self.yaw = self.yaw + abs(self.pose.yaw - self.yaw_ref)
             self.yaw_ref = self.pose.yaw
@@ -52,23 +53,13 @@ class Square(Node):
                     linear=0.0, angular=0.3
                 )
         else:
-            # move forwards by 1m...
+            # Moving Forwards State
+
             # keep track of how much displacement has been accrued so far
-            # (Note: Euclidean Distance)
-            self.displacement = self.displacement + sqrt(pow(self.pose.posx-self.xpos_ref, 2) + pow(self.pose.posy-self.ypos_ref, 2))
+            self.displacement = 0.0
             self.xpos_ref = self.pose.posx
             self.ypos_ref = self.pose.posy
-            if self.displacement >= 1:
-                # That's enough, stop moving!
-                self.motion.stop()
-                self.turn = True
-                self.displacement = 0.0
-                self.yaw_ref = self.pose.yaw
-            else:
-                # Not there yet, keep going:
-                self.motion.move_at_velocity(
-                    linear=0.1, angular=0.0
-                )
+            
 
 def main(args=None):
     rclpy.init(
