@@ -1,74 +1,73 @@
 #!/usr/bin/env python3
 
-import rclpy
+import rclpy 
 from rclpy.node import Node
-from rclpy.signals import SignalHandlerOptions
+from rclpy.task import Future
 from ament_index_python.packages import get_package_share_directory
-from nav2_msgs.srv import SaveMap
-from pathlib import Path
 
-class MapSaver(Node):
+import cv2
+from cv_bridge import CvBridge, CvBridgeError 
 
-    def __init__(self):
-        super().__init__("ex4_map_saver")
+from sensor_msgs.msg import Image 
 
-        pkg_path = Path(get_package_share_directory('amr31001_lab2'))
-        map_path = pkg_path.joinpath('maps')
-        map_path.mkdir(exist_ok=True)
-        self.map_file = str(map_path.joinpath('my_map')).replace(str(Path.home()), '').lstrip('/')
+from pathlib import Path 
 
-        self.client = self.create_client(
-            srv_type=SaveMap, 
-            srv_name='map_saver/save_map'
+class ImageCapture(Node):
+
+    def __init__(self): 
+        super().__init__("object_detection")
+
+        self.image_capture_future = Future()
+
+        self.camera_sub = self.create_subscription(
+            msg_type=Image,
+            topic="/camera/color/image_raw",
+            callback=self.camera_callback,
+            qos_profile=10
         )
 
-        self.create_timer(
-            timer_period_sec=5, 
-            callback=self.save_map,
-        )
+        self.img_count = 0
+        self.img_count_until_capture = 5
+        self.waiting_for_image = True 
 
-        while not self.client.wait_for_service(timeout_sec=1.0):
-            continue
+    def camera_callback(self, img_data): 
+        cvbridge_interface = CvBridge() 
+        try:
+            cv_img = cvbridge_interface.imgmsg_to_cv2(
+                img_data, desired_encoding="bgr8"
+            ) 
+        except CvBridgeError as e:
+            self.get_logger().warning(f"{e}")
 
-        self.get_logger().info(
-            "Map service ready."
-        )
+        if self.img_count < self.img_count_until_capture:
+            self.img_count += 1
+        else: 
+            self.waiting_for_image = False
+            self.save_image(img=cv_img, img_name="cam_img")  
+            self.image_capture_future.set_result('done')        
 
-    def save_map(self):
-        self.get_logger().info(
-            f"Saving map to: ~/{self.map_file}"
-        )
+    def save_image(self, img, img_name): 
 
-        request = SaveMap.Request()
+        self.get_logger().info(f"Saving image...")
 
-        request.map_topic = '/map'
-        request.map_url = self.map_file
-        request.image_format = 'pgm'
-        request.map_mode = 'trinary'
-        
-        self.client.call_async(request)
+        base_image_path = Path(
+            get_package_share_directory("amr31001_lab2")
+            ).joinpath("images")
+        base_image_path.mkdir(parents=True, exist_ok=True) 
+        self.full_image_path = base_image_path.joinpath(
+            f"{img_name}.jpg") 
 
-    def on_shutdown(self):
-        self.shutdown = True
+        cv2.imwrite(str(self.full_image_path), img) 
 
 def main(args=None):
-    rclpy.init(
-        args=args,
-        signal_handler_options=SignalHandlerOptions.NO,
-    )
-    node = MapSaver()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        print(
-            f"{node.get_name()} received a shutdown request (Ctrl+C)."
-        )
-    finally:
-        node.on_shutdown()
-        while not node.shutdown:
-            continue
-        node.destroy_node()
-        rclpy.shutdown()
+    rclpy.init(args=args)
+    node = ImageCapture()
+    rclpy.spin_until_future_complete(
+        node, node.image_capture_future
+    ) 
+    node.destroy_node()
+    rclpy.shutdown()
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
+    
