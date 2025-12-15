@@ -17,6 +17,10 @@ class ImageCapture(Node):
     def __init__(self): 
         super().__init__("object_detection")
 
+        self.get_logger().info(
+            f"\nSaving an image, please wait..."
+        )
+
         self.image_capture_future = Future()
 
         self.camera_sub = self.create_subscription(
@@ -47,8 +51,6 @@ class ImageCapture(Node):
             self.image_capture_future.set_result('done')        
 
     def save_image(self, img, img_name): 
-
-        self.get_logger().info(f"Saving image...")
 
         base_image_path = Path(
             get_package_share_directory("amr31001_lab2")
