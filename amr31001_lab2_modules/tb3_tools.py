@@ -2,8 +2,11 @@ from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped, Quaternion
 from nav_msgs.msg import Odometry
 from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import Image
 from math import atan2, asin, degrees
 import numpy as np
+import cv2
+from cv_bridge import CvBridge, CvBridgeError
 
 def quaternion_to_euler(orientation: Quaternion):
     """
@@ -166,4 +169,59 @@ class Lidar():
         
         self.wait_for_readings = False
 
+class Camera():
     
+    def __init__(self, node: Node):
+        self.node = node        
+        self.subscriber = self.node.create_subscription(
+            msg_type=Image,
+            topic='/camera/image_raw',
+            callback=self.cam_cb,
+            qos_profile=10
+        )
+        self.colour_filter()  
+
+    def colour_filter(self, 
+            hue = [145, 165], 
+            saturation = [180, 255], 
+            value = [100, 255]):
+        self.lower = (hue[0], saturation[0], value[0])
+        self.upper = (hue[1], saturation[1], value[1]) 
+    
+    def cam_cb(self, img_data: Image):
+        cvbridge_interface = CvBridge()
+        try:
+            cv_img = cvbridge_interface.imgmsg_to_cv2(
+                img_data, desired_encoding="bgr8")
+        except CvBridgeError as e:
+            self.get_logger().warn(f"{e}")
+
+        height, width, _ = cv_img.shape
+        self.img_width = width
+        crop_height = int(height / 5)
+        crop_z0 = height - 200 - crop_height
+        crop_z1 = crop_z0 + crop_height
+        cropped_img = cv_img[
+            crop_z0:crop_z1, 0:width
+        ]
+        
+        hsv_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
+        line_mask = cv2.inRange(
+            hsv_img, self.lower, self.upper
+        )
+        
+        m = cv2.moments(line_mask)
+        cy = m['m10'] / (m['m00'] + 1e-5)
+        cz = m['m01'] / (m['m00'] + 1e-5)
+
+        self.line_error_pixels = cy - ( width / 2 )
+
+        res = cv2.bitwise_and(cropped_img, cropped_img, mask = line_mask)
+
+        cv2.circle(res, (int(cy), int(cz)), 10, (255, 0, 0), 2)
+        cv2.imshow("filtered image", res)
+
+        cv2.waitKey(1)
+    
+    def close(self):
+        cv2.destroyAllWindows()

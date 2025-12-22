@@ -24,6 +24,7 @@ install(PROGRAMS
   scripts/ex2.py
   scripts/ex3.py
   scripts/ex4.py
+  scripts/ex4_line_follow.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
