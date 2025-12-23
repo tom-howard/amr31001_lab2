@@ -185,6 +185,8 @@ class Camera():
             callback=self.cam_cb,
             qos_profile=10
         )
+        self.colour_detected = False
+        self.m00_threshold = 20000
         self.colour_filter()
         self.waiting_for_images = True  
 
@@ -225,14 +227,24 @@ class Camera():
         cy = m['m10'] / (m['m00'] + 1e-5)
         cz = m['m01'] / (m['m00'] + 1e-5)
 
-        self.line_error_pixels = cy - ( width / 2 )
+        self.colour_detected = True if m['m00'] > self.m00_threshold else False
+        if not self.colour_detected:
+            self.node.get_logger().warning(
+                "No colour blob detected within the specified HSV range.",
+                throttle_duration_sec=2.0
+            )
+            self.line_error_pixels = 0.0
+        else:
+            self.line_error_pixels = cy - ( width / 2 )
 
         res = cv2.bitwise_and(cropped_img, cropped_img, mask = line_mask)
 
-        cv2.circle(res, (int(cy), int(cz)), 10, (255, 0, 0), 2)
+        if self.colour_detected:
+            cv2.circle(res, (int(cy), int(cz)), 10, (255, 0, 0), 2)
+        
         cv2.imshow("filtered image", res)
-
         cv2.waitKey(1)
+        
         self.waiting_for_images = False
     
     def close(self):

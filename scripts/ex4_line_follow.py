@@ -15,8 +15,8 @@ class LineFollower(Node):
         self.camera = Camera(self)
 
         self.camera.colour_filter(
-            hue=[95, 105],
-            saturation=[150, 255],
+            # hue=[95, 105],
+            # saturation=[150, 255],
         )
 
         self.create_timer(
@@ -45,16 +45,17 @@ class LineFollower(Node):
         error = self.camera.line_error_pixels 
 
         ang_vel = kp * error
+        lin_vel = 0.1 if self.camera.colour_detected else 0.0
         
         self.motion.move_at_velocity(
-            linear = 0.1,
+            linear = lin_vel,
             angular = ang_vel
         )
 
         self.get_logger().info(
             f"\nLine offset = {error:.1f} pixels"
             f"\nAngular velocity = {ang_vel:.3f} rad/s.",
-            throttle_duration_sec=0.5
+            throttle_duration_sec=1.0
         )
         
 def main(args=None):
