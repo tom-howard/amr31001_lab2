@@ -1,12 +1,12 @@
 from rclpy.node import Node
 from geometry_msgs.msg import TwistStamped, Quaternion
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
-from sensor_msgs.msg import Image
+from sensor_msgs.msg import LaserScan, Image
 from math import atan2, asin, degrees
 import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
+import socket
 
 def quaternion_to_euler(orientation: Quaternion):
     """
@@ -50,14 +50,16 @@ class Motion():
             lin_org = linear
             linear = (linear / abs(linear)) * 0.26
             self.node.get_logger().warning(
-                f"LINEAR velocity limited to {linear} m/s ({lin_org} m/s was requested)."
+                f"LINEAR velocity limited to {linear} m/s ({lin_org} m/s was requested).",
+                throttle_duration_sec=2.0
             )
-
-        if abs(angular) > 1.82:
+        ang_lim = 1.0 # rad/s
+        if abs(angular) > ang_lim:
             ang_org = angular
-            angular = (angular / abs(angular)) * 1.82
+            angular = (angular / abs(angular)) * ang_lim
             self.node.get_logger().warning(
-                f"ANGULAR velocity limited to {angular} rad/s ({ang_org} rad/s was requested)."
+                f"ANGULAR velocity limited to {angular} rad/s ({ang_org} rad/s was requested).",
+                throttle_duration_sec=2.0
             )
         
         self.vel_cmd.twist.linear.x = linear
@@ -170,23 +172,28 @@ class Lidar():
         self.wait_for_readings = False
 
 class Camera():
-    
     def __init__(self, node: Node):
         self.node = node        
+        hostname = socket.gethostname()
+        if hostname.startswith("dia-laptop"):
+            camera_topic = '/camera/color/image_raw'
+        else:
+            camera_topic = '/camera/image_raw'
         self.subscriber = self.node.create_subscription(
             msg_type=Image,
-            topic='/camera/image_raw',
+            topic=camera_topic,
             callback=self.cam_cb,
             qos_profile=10
         )
-        self.colour_filter()  
+        self.colour_filter()
+        self.waiting_for_images = True  
 
     def colour_filter(self, 
-            hue = [145, 165], 
-            saturation = [180, 255], 
-            value = [100, 255]):
-        self.lower = (hue[0], saturation[0], value[0])
-        self.upper = (hue[1], saturation[1], value[1]) 
+            hue = [0, 225], 
+            saturation = [0, 255], 
+            value = [0, 255]):
+        self.lower = (min(hue), min(saturation), min(value))
+        self.upper = (max(hue), max(saturation), max(value)) 
     
     def cam_cb(self, img_data: Image):
         cvbridge_interface = CvBridge()
@@ -198,12 +205,16 @@ class Camera():
 
         height, width, _ = cv_img.shape
         self.img_width = width
-        crop_height = int(height / 5)
-        crop_z0 = height - 200 - crop_height
-        crop_z1 = crop_z0 + crop_height
-        cropped_img = cv_img[
-            crop_z0:crop_z1, 0:width
-        ]
+        
+        if height > 480: 
+            crop_height = int(height / 5)
+            crop_z0 = height - 200 - crop_height
+            crop_z1 = crop_z0 + crop_height
+            cropped_img = cv_img[
+                crop_z0:crop_z1, 0:width
+            ]
+        else:
+            cropped_img = cv_img
         
         hsv_img = cv2.cvtColor(cropped_img, cv2.COLOR_BGR2HSV)
         line_mask = cv2.inRange(
@@ -222,6 +233,7 @@ class Camera():
         cv2.imshow("filtered image", res)
 
         cv2.waitKey(1)
+        self.waiting_for_images = False
     
     def close(self):
         cv2.destroyAllWindows()
