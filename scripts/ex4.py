@@ -11,6 +11,9 @@ from cv_bridge import CvBridge, CvBridgeError
 from sensor_msgs.msg import Image 
 
 from pathlib import Path 
+import matplotlib.pyplot as plt
+from matplotlib import colors
+import numpy as np
 
 class ImageCapture(Node):
 
@@ -60,6 +63,25 @@ class ImageCapture(Node):
             f"{img_name}.jpg") 
 
         cv2.imwrite(str(self.full_image_path), img) 
+    
+    def proc_image(self, img): 
+        rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+        pixel_colors = rgb_img.reshape((np.shape(rgb_img)[0]*np.shape(rgb_img)[1], 3))
+        norm = colors.Normalize(vmin=-1.,vmax=1.)
+        norm.autoscale(pixel_colors)
+        pixel_colors = norm(pixel_colors).tolist()
+
+        hsv_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2HSV)
+
+        h, s, v = cv2.split(hsv_img)
+        fig = plt.figure()
+        ax = fig.add_subplot(1, 1, 1)
+        ax.scatter(h.flatten(), s.flatten(), facecolors=pixel_colors, marker=".")
+        ax.set_xlabel("Hue")
+        ax.set_ylabel("Saturation")
+        ax.grid(True)
+        fig.savefig(Path(str(self.full_image_path).replace(".jpg", "_hsv.png")))
 
 def main(args=None):
     rclpy.init(args=args)
