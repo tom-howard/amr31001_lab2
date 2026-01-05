@@ -6,7 +6,6 @@ from math import atan2, asin, degrees
 import numpy as np
 import cv2
 from cv_bridge import CvBridge, CvBridgeError
-import socket
 
 def quaternion_to_euler(orientation: Quaternion):
     """
@@ -173,15 +172,11 @@ class Lidar():
 
 class Camera():
     def __init__(self, node: Node):
-        self.node = node        
-        hostname = socket.gethostname()
-        if hostname.startswith("dia-laptop"):
-            camera_topic = '/camera/color/image_raw'
-        else:
-            camera_topic = '/camera/image_raw'
+        self.node = node
+        
         self.subscriber = self.node.create_subscription(
             msg_type=Image,
-            topic=camera_topic,
+            topic='/camera/color/image_raw',
             callback=self.cam_cb,
             qos_profile=10
         )
@@ -206,7 +201,7 @@ class Camera():
             self.get_logger().warn(f"{e}")
 
         height, width, _ = cv_img.shape
-        self.img_width = width
+        self.image_width = width
         
         if height > 480: 
             crop_height = int(height / 5)
@@ -233,9 +228,9 @@ class Camera():
                 "No colour blob detected within the specified HSV range.",
                 throttle_duration_sec=2.0
             )
-            self.line_error_pixels = 0.0
+            self.line_position_pixels = 0.0
         else:
-            self.line_error_pixels = cy - ( width / 2 )
+            self.line_position_pixels = cy
 
         res = cv2.bitwise_and(cropped_img, cropped_img, mask = line_mask)
 

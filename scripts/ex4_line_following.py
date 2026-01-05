@@ -14,13 +14,10 @@ class LineFollower(Node):
         self.motion = Motion(self)
         self.camera = Camera(self)
 
-        self.camera.colour_filter(
-            # hue=[95, 105],
-            # saturation=[150, 255],
-        )
+        self.camera.colour_filter()
 
         self.create_timer(
-            timer_period_sec=0.1, 
+            timer_period_sec=0.08, 
             callback=self.follow_line,
         )
     
@@ -35,22 +32,15 @@ class LineFollower(Node):
     def follow_line(self):
         
         if self.camera.waiting_for_images:
-            self.get_logger().info(
-                "Waiting for images...",
-                throttle_duration_sec=1.0
-            )
             return
 
-        kp = -0.001
-        error = self.camera.line_error_pixels 
+        kp = 0.01
+        reference_input = self.camera.image_width / 2
+        error = 0.0 # TODO
 
         ang_vel = kp * error
-        lin_vel = 0.1 if self.camera.colour_detected else 0.0
         
-        self.motion.move_at_velocity(
-            linear = lin_vel,
-            angular = ang_vel
-        )
+        self.motion.move_at_velocity()
 
         self.get_logger().info(
             f"\nLine offset = {error:.1f} pixels"
