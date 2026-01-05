@@ -23,14 +23,9 @@ ament_python_install_package(${PROJECT_NAME}_modules)
 install(PROGRAMS
   scripts/ex2.py
   scripts/ex3.py
-  scripts/ex4.py
-  scripts/ex4_line_follow.py
+  scripts/ex4_colour_detection.py
+  scripts/ex4_line_following.py
   DESTINATION lib/${PROJECT_NAME}
-)
-
-install(DIRECTORY
-  launch
-  DESTINATION share/${PROJECT_NAME}
 )
 
 ament_package()

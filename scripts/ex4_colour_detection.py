@@ -19,7 +19,7 @@ class ImageCapture(Node):
         super().__init__("object_detection")
 
         self.get_logger().info(
-            f"\nProcessing image, please wait..."
+            f"\nProcessing the current view, please wait..."
         )
 
         self.image_capture_future = Future()
