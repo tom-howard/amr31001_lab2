@@ -3,14 +3,12 @@
 import rclpy 
 from rclpy.node import Node
 from rclpy.task import Future
-from ament_index_python.packages import get_package_share_directory
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError 
 
 from sensor_msgs.msg import Image 
 
-from pathlib import Path 
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import numpy as np
@@ -21,7 +19,7 @@ class ImageCapture(Node):
         super().__init__("object_detection")
 
         self.get_logger().info(
-            f"\nSaving an image, please wait..."
+            f"\nProcessing image, please wait..."
         )
 
         self.image_capture_future = Future()
@@ -50,20 +48,9 @@ class ImageCapture(Node):
             self.img_count += 1
         else: 
             self.waiting_for_image = False
-            self.save_image(img=cv_img, img_name="cam_img")  
+            self.proc_image(img=cv_img)  
             self.image_capture_future.set_result('done')        
 
-    def save_image(self, img, img_name): 
-
-        base_image_path = Path(
-            get_package_share_directory("amr31001_lab2")
-            ).joinpath("images")
-        base_image_path.mkdir(parents=True, exist_ok=True) 
-        self.full_image_path = base_image_path.joinpath(
-            f"{img_name}.jpg") 
-
-        cv2.imwrite(str(self.full_image_path), img) 
-    
     def proc_image(self, img): 
         rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -75,14 +62,19 @@ class ImageCapture(Node):
         hsv_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2HSV)
 
         h, s, v = cv2.split(hsv_img)
-        fig = plt.figure()
-        ax = fig.add_subplot(1, 1, 1)
-        ax.scatter(h.flatten(), s.flatten(), facecolors=pixel_colors, marker=".")
-        ax.set_xlabel("Hue")
-        ax.set_ylabel("Saturation")
-        ax.grid(True)
-        fig.savefig(Path(str(self.full_image_path).replace(".jpg", "_hsv.png")))
+        
+        fig, ax = plt.subplots(1, 2, figsize=(12, 5))
+        ax[0].scatter(h.flatten(), s.flatten(), facecolors=pixel_colors, marker=".")
+        ax[0].set_xlabel("Hue")
+        ax[0].set_ylabel("Saturation")
+        ax[0].grid(True)
+        
+        ax[1].imshow(rgb_img)
+        ax[1].axis("off")
 
+        plt.tight_layout()
+        plt.show()        
+        
 def main(args=None):
     rclpy.init(args=args)
     node = ImageCapture()
