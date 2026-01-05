@@ -3,6 +3,7 @@
 import rclpy 
 from rclpy.node import Node
 from rclpy.task import Future
+from ament_index_python.packages import get_package_share_directory
 
 import cv2
 from cv_bridge import CvBridge, CvBridgeError 
@@ -12,11 +13,20 @@ from sensor_msgs.msg import Image
 import matplotlib.pyplot as plt
 from matplotlib import colors
 import numpy as np
+from pathlib import Path 
 
 class ImageCapture(Node):
 
     def __init__(self): 
         super().__init__("object_detection")
+
+        base_image_path = Path(
+            get_package_share_directory("amr31001_lab2")
+            ).joinpath("images")
+        base_image_path.mkdir(parents=True, exist_ok=True) 
+        self.image_path = base_image_path.joinpath(
+            "hsv_cam_img.png"
+        )
 
         self.get_logger().info(
             f"\nProcessing the current view, please wait..."
@@ -73,7 +83,8 @@ class ImageCapture(Node):
         ax[1].axis("off")
 
         plt.tight_layout()
-        plt.show()        
+        fig.savefig(self.image_path)
+        plt.show()
         
 def main(args=None):
     rclpy.init(args=args)
