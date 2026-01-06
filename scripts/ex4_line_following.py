@@ -17,7 +17,7 @@ class LineFollower(Node):
         self.camera.colour_filter()
 
         self.create_timer(
-            timer_period_sec=0.08, 
+            timer_period_sec=0.2, 
             callback=self.follow_line,
         )
     
