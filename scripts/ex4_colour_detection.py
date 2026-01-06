@@ -27,6 +27,9 @@ class ImageCapture(Node):
         self.image_path = base_image_path.joinpath(
             "hsv_cam_img.png"
         )
+        self.raw_image_path = base_image_path.joinpath(
+            "raw_img.jpg"
+        )
 
         self.get_logger().info(
             f"\nProcessing the current view, please wait..."
@@ -61,7 +64,9 @@ class ImageCapture(Node):
             self.proc_image(img=cv_img)  
             self.image_capture_future.set_result('done')        
 
-    def proc_image(self, img): 
+    def proc_image(self, img):
+        cv2.imwrite(str(self.raw_image_path), img)
+
         rgb_img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         pixel_colors = rgb_img.reshape((np.shape(rgb_img)[0]*np.shape(rgb_img)[1], 3))
