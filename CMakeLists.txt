@@ -22,9 +22,9 @@ ament_python_install_package(${PROJECT_NAME}_modules)
 # Install Python executables
 install(PROGRAMS
   scripts/ex2.py
-  scripts/ex3.py
-  scripts/ex4_colour_detection.py
-  scripts/ex4_line_following.py
+  scripts/ex3_colour_detection.py
+  scripts/ex3_line_following.py
+  scripts/ex4.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

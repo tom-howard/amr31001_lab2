@@ -4,69 +4,58 @@ import rclpy
 from rclpy.node import Node
 from rclpy.signals import SignalHandlerOptions
 
-from amr31001_lab2_modules.tb3_tools import Motion, Pose
-from math import sqrt, pow
+from amr31001_lab2_modules.tb3_tools import Motion, Lidar
 
-class Square(Node):
+class WallFollower(Node):
 
     def __init__(self):
-        super().__init__("move_square")
+        super().__init__("wall_follower")
 
         self.motion = Motion(self)
-        self.pose = Pose(self)
+        self.lidar = Lidar(self)
 
-        self.turn = False 
-        
         self.create_timer(
-            timer_period_sec=0.05, 
-            callback=self.move_square,
+            timer_period_sec=0.1, 
+            callback=self.follow_wall,
         )
-
-        self.xpos_ref = 0.0; self.ypos_ref = 0.0; self.yaw_ref = 0.0
-        self.yaw = 0.0 # a variable to keep track of how far the robot has turned
-        self.displacement = 0.0 # a variable to keep track of how far the robot has moved
-             
-        self.shutdown = False
-
+    
     def on_shutdown(self):
         print("Stopping the robot...")
         self.motion.stop()
         self.shutdown = True
 
-    def move_square(self):
-        if self.turn:
-            # Turning State
-            
-            # keep track of how much yaw has been accrued during the current turn
-            self.yaw = self.yaw + abs(self.pose.yaw - self.yaw_ref)
-            self.yaw_ref = self.pose.yaw
-            if self.yaw > 90:
-                # That's enough, stop turning!
-                self.motion.stop()
-                self.turn = False
-                self.yaw = 0.0
-                self.xpos_ref = self.pose.posx
-                self.ypos_ref = self.pose.posy
-            else:
-                # Not there yet, keep going:
-                self.motion.move_at_velocity(
-                    linear=0.0, angular=0.3
-                )
-        else:
-            # Moving Forwards State
+    def follow_wall(self):
+        lin_vel = 0.0
 
-            # keep track of how much displacement has been accrued so far
-            self.displacement = 0.0
-            self.xpos_ref = self.pose.posx
-            self.ypos_ref = self.pose.posy
-            
+        wall_slope = self.lidar.distance.l3 - self.lidar.distance.l4
+
+        if abs(wall_slope) < 0.001:
+            action = "go straight"
+            ang_vel = 0.0
+        elif wall_slope < 0:
+            action = "turn left, or right??"
+            ang_vel = 0.0
+        else:
+            action = "turn left, or right??"
+            ang_vel = 0.0
+        
+        self.get_logger().info("\n"
+            f"{self.lidar.distance.show()}\n"
+            f"{wall_slope=:.3f}\n"
+            f"{action=}\n",
+            throttle_duration_sec=1.0
+        )
+
+        self.motion.move_at_velocity(
+            linear=lin_vel, angular=ang_vel
+        )
 
 def main(args=None):
     rclpy.init(
         args=args,
         signal_handler_options=SignalHandlerOptions.NO,
     )
-    node = Square()
+    node = WallFollower()
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
